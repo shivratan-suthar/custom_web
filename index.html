@@ -2,91 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Style External Page</title>
+  <title>Smart Reader</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
+      margin: 0;
+      background: #111;
       color: white;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    iframe {
+    #topbar {
+      background: #222;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 14px;
+    }
+    #reader-frame {
+      flex: 1;
       width: 100%;
-      height: 80vh;
-      border: 1px solid #ccc;
-      margin-top: 20px;
-    }
-    label {
-      display: inline-block;
-      width: 150px;
-      margin-top: 10px;
+      border: none;
     }
   </style>
 </head>
 <body>
-  <h2>Style an External Webpage</h2>
-
-  <label>Enter Page URL:</label>
-  <input type="text" id="urlInput" value="https://example.com" size="50" />
-  <br>
-
-  <label>Text Color:</label>
-  <input type="color" id="textColor" value="#00ff00" />
-  <br>
-
-  <label>Background Color:</label>
-  <input type="color" id="bgColor" value="#000000" />
-  <br>
-
-  <label>Text Size:</label>
-  <select id="textSize">
-    <option value="14px">14px</option>
-    <option value="16px" selected>16px</option>
-    <option value="18px">18px</option>
-    <option value="20px">20px</option>
-    <option value="24px">24px</option>
-    <option value="30px">30px</option>
-  </select>
-  <br><br>
-
-  <button onclick="loadAndStylePage()">Load and Style Page</button>
-
-  <iframe id="previewFrame"></iframe>
+  <div id="topbar">
+    <input id="urlInput" type="text" placeholder="Enter URL" style="flex: 1;">
+    <input id="textColor" type="color" value="#00ff00" title="Text color">
+    <input id="bgColor" type="color" value="#000000" title="Background color">
+    <button onclick="loadURL()">Load</button>
+  </div>
+  <iframe id="reader-frame"></iframe>
 
   <script>
-    async function loadAndStylePage() {
-      const url = document.getElementById('urlInput').value;
-      const textColor = document.getElementById('textColor').value;
-      const bgColor = document.getElementById('bgColor').value;
-      const textSize = document.getElementById('textSize').value;
+    const iframe = document.getElementById('reader-frame');
+    const urlInput = document.getElementById('urlInput');
 
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-
-      try {
-        const response = await fetch(proxyUrl);
-        let html = await response.text();
-
-        const styleTag = `
-          <style>
-            * {
-              background-color: ${bgColor} !important;
-              color: ${textColor} !important;
-              font-size: ${textSize} !important;
-            }
-          </style>
-        `;
-
-        html = html.replace(/<head.*?>/, match => match + styleTag);
-
-        const blob = new Blob([html], { type: 'text/html' });
-        const blobUrl = URL.createObjectURL(blob);
-
-        document.getElementById('previewFrame').src = blobUrl;
-      } catch (e) {
-        alert('Error loading URL. Try a different one or check your connection.');
-        console.error(e);
+    function loadURL() {
+      const url = urlInput.value.trim();
+      if (!url.startsWith('http')) {
+        alert('Enter a valid URL (https://...)');
+        return;
       }
+      const encoded = encodeURIComponent(url);
+      const text = document.getElementById('textColor').value.slice(1);
+      const bg = document.getElementById('bgColor').value.slice(1);
+      iframe.src = `https://custom-web-server-ub86.onrender.com/proxy?url=${encoded}&text=${text}&bg=${bg}`;
     }
+
+    // Listen for navigation requests from iframe
+    window.addEventListener('message', (e) => {
+      if (e.data?.type === 'navigate' && e.data.url) {
+        urlInput.value = e.data.url;
+        loadURL();
+      }
+    });
   </script>
 </body>
 </html>
